@@ -12,6 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Render (como Heroku/Fly) termina TLS en su borde y nos habla por HTTP
+        // interno; sin esto, Laravel genera URLs http:// y el navegador bloquea
+        // los assets por contenido mixto.
+        $middleware->trustProxies(at: '*');
+
         $middleware->appendToGroup('web', \App\Http\Middleware\EnsureLegacySessionNotExpired::class);
         $middleware->alias(['administrador' => \App\Http\Middleware\EsAdministrador::class]);
     })
