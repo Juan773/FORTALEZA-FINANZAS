@@ -13,6 +13,7 @@ storage/logs/*
 !storage/framework/sessions/.gitignore
 !storage/framework/views/.gitignore
 !storage/logs/.gitignore
+bootstrap/cache/*.php
 tests
 docs
 .phpunit.result.cache

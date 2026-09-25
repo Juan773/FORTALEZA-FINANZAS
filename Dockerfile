@@ -17,15 +17,17 @@ COPY . .
 RUN npm run build
 
 # ---- Etapa 3: imagen final (php-fpm + nginx + supervisor) ----
-FROM php:8.3-fpm-alpine AS app
+FROM php:8.4-fpm-alpine AS app
 
 RUN apk add --no-cache \
         nginx supervisor bash ca-certificates gettext mysql-client \
-        libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev icu-dev oniguruma-dev \
+        libpng libjpeg-turbo freetype libzip icu-libs oniguruma \
+    && apk add --no-cache --virtual .build-deps \
+        $PHPIZE_DEPS libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev icu-dev oniguruma-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
         pdo_mysql mbstring bcmath ctype gd zip intl opcache \
-    && apk del --no-cache libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev icu-dev oniguruma-dev
+    && apk del --no-cache .build-deps
 
 WORKDIR /var/www/html
 
