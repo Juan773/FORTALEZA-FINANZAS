@@ -5,6 +5,7 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     plan: free
+    region: virginia
     envVars:
       - key: APP_NAME
         value: "Fortaleza Finanzas"
