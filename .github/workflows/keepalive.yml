@@ -1,0 +1,16 @@
+name: Keep-alive Render + TiDB
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /login (despierta Render y toca la sesión en TiDB)
+        run: |
+          curl -sS -o /dev/null -w "HTTP %{http_code} en %{time_total}s\n" \
+            --max-time 90 \
+            https://fortaleza-finances.onrender.com/login
