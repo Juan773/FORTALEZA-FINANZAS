@@ -46,8 +46,11 @@ class NuevoRecibo extends Component
             return collect();
         }
 
+        // UPPER() en ct_nombres: gen_personas quedó con colación latin1_bin
+        // (sensible a mayúsculas) al importarse a TiDB; ver detalle en Socios\Index.
+        // ct_nro_doc no lo necesita (son solo dígitos).
         return GenPersona::where('cfl_vigencia', '1')
-            ->where(fn ($q) => $q->where('ct_nombres', 'like', '%'.$this->buscarSocio.'%')
+            ->where(fn ($q) => $q->whereRaw('UPPER(ct_nombres) LIKE UPPER(?)', ['%'.$this->buscarSocio.'%'])
                 ->orWhere('ct_nro_doc', 'like', '%'.$this->buscarSocio.'%'))
             ->limit(8)->get();
     }

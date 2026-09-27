@@ -45,8 +45,10 @@ class Index extends Component
             return collect();
         }
 
+        // UPPER() en ambos lados: gen_personas quedó con colación latin1_bin
+        // (sensible a mayúsculas) al importarse a TiDB; ver detalle en Socios\Index.
         return GenPersona::whereNotIn('cc_persona', DB::connection('legacy')->table('seg_usuario')->pluck('cc_usuario'))
-            ->where('ct_nombres', 'like', '%'.$this->buscarSocio.'%')
+            ->whereRaw('UPPER(ct_nombres) LIKE UPPER(?)', ['%'.$this->buscarSocio.'%'])
             ->limit(8)->get();
     }
 

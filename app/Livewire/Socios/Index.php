@@ -186,13 +186,20 @@ class Index extends Component
      * Reemplaza bo_gen_personas::listarSocioReporte(): mismos tres filtros de reporte,
      * más la búsqueda por ct_conyugue (mejora nueva: hay socios cuyo cónyuge no tiene
      * registro propio, y buscarlo por su nombre debe encontrar al socio igual).
+     *
+     * UPPER() en ambos lados en vez de `like` normal: las columnas de texto de
+     * gen_personas quedaron con colación latin1_bin (sensible a mayúsculas) al
+     * importarse a TiDB, a diferencia de latin1_swedish_ci en MySQL local. TiDB
+     * no permite convertir de vuelta ("Unsupported collation when new collation
+     * is enabled"), así que se normaliza aquí para que la búsqueda no dependa
+     * de que el usuario escriba el término con las mismas mayúsculas exactas.
      */
     protected function consultaFiltrada()
     {
         return GenPersona::query()
             ->when($this->buscar, fn ($q) => $q->where(fn ($sub) => $sub
-                ->where('ct_nombres', 'like', '%'.$this->buscar.'%')
-                ->orWhere('ct_conyugue', 'like', '%'.$this->buscar.'%')
+                ->whereRaw('UPPER(ct_nombres) LIKE UPPER(?)', ['%'.$this->buscar.'%'])
+                ->orWhereRaw('UPPER(ct_conyugue) LIKE UPPER(?)', ['%'.$this->buscar.'%'])
             ))
             ->when($this->filtroTipoUsuario, fn ($q) => $q->where('ct_tp_user', $this->filtroTipoUsuario))
             ->when($this->filtroZona, fn ($q) => $q->where('ct_zona', $this->filtroZona))

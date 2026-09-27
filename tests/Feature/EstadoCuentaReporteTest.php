@@ -86,8 +86,13 @@ it('el PDF de estado de cuenta respeta "todos los años" cuando anho llega vací
 it('encuentra al socio cuando se busca por el nombre de su cónyuge', function () {
     $this->actingAs((new SegUsuario())->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
 
+    // Minúsculas/mayúsculas mixtas a propósito (así lo escribió el usuario real):
+    // el dato está guardado en mayúsculas, la búsqueda debe ser insensible a esto
+    // (nota: este caso puntual pasa igual en MySQL local sin el fix — el bug real
+    // era la colación latin1_bin de TiDB en producción, ver comentario en
+    // Socios\Index::consultaFiltrada — pero igual se deja así por ser el input real).
     $componente = Livewire::test(EstadoCuentaIndex::class)
-        ->set('buscarSocio', 'HILASACA');
+        ->set('buscarSocio', 'Hilasaca');
 
     $resultados = $componente->instance()->resultadosBusquedaSocios();
 

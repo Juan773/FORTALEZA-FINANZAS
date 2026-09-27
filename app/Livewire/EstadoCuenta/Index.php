@@ -39,6 +39,9 @@ class Index extends Component
      * tenga registro propio (ver caso real Felicita Hilasaca Portillo, cónyuge del
      * socio Moisés Minaya Pampa) — así igual aparece el socio cuya cuenta es la que
      * existe de verdad, aclarando en la vista que el nombre coincide por cónyuge.
+     *
+     * UPPER() en ambos lados: gen_personas quedó con colación latin1_bin (sensible
+     * a mayúsculas) al importarse a TiDB; ver comentario igual en Socios\Index.
      */
     public function resultadosBusquedaSocios()
     {
@@ -47,8 +50,8 @@ class Index extends Component
         }
 
         return GenPersona::where(fn ($q) => $q
-                ->where('ct_nombres', 'like', '%'.$this->buscarSocio.'%')
-                ->orWhere('ct_conyugue', 'like', '%'.$this->buscarSocio.'%')
+                ->whereRaw('UPPER(ct_nombres) LIKE UPPER(?)', ['%'.$this->buscarSocio.'%'])
+                ->orWhereRaw('UPPER(ct_conyugue) LIKE UPPER(?)', ['%'.$this->buscarSocio.'%'])
             )
             ->orderBy('ct_nombres')
             ->limit(8)->get();
