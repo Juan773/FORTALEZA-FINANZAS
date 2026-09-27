@@ -9,10 +9,16 @@ COPY . .
 RUN composer dump-autoload --optimize --no-dev
 
 # ---- Etapa 2: assets (Vite) ----
+# Necesita vendor/ ANTES de compilar: app.css usa @source para que Tailwind
+# escanee vendor/laravel/framework/.../Pagination/*.blade.php (de ahí salen
+# las clases de la paginación). Sin vendor/ presente en esta etapa, Tailwind
+# no encuentra ese archivo y esas clases faltan en el CSS de producción
+# (la paginación queda sin estilos aunque el HTML sí se genera bien).
 FROM node:20-alpine AS assets
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
+COPY --from=vendor /app/vendor ./vendor
 COPY . .
 RUN npm run build
 
