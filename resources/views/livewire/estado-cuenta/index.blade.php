@@ -5,6 +5,7 @@
         <div>
             <label class="block text-xs text-slate-400 mb-1">Año</label>
             <select wire:model="anho" class="w-full rounded bg-slate-700 border-slate-600 text-sm">
+                <option value="">Todos los años</option>
                 @foreach ($anhos as $a)
                     <option value="{{ $a }}">{{ $a }}</option>
                 @endforeach
@@ -16,13 +17,28 @@
             @error('ct_nro_doc') <p class="text-red-400 text-xs mt-1">{{ $message }}</p> @enderror
         </div>
         <div class="md:col-span-2">
-            <label class="block text-xs text-slate-400 mb-1">Concepto (opcional)</label>
+            <label class="block text-xs text-slate-400 mb-1">Concepto</label>
             <select wire:model="cc_concepto" class="w-full rounded bg-slate-700 border-slate-600 text-sm">
-                <option value="">—</option>
+                <option value="">Todos los conceptos</option>
                 @foreach ($conceptos as $concepto)
                     <option value="{{ $concepto->cc_concepto }}">{{ $concepto->ct_nombre }}</option>
                 @endforeach
             </select>
+        </div>
+        <div class="md:col-span-4 relative">
+            <label class="block text-xs text-slate-400 mb-1">O busca al socio por nombre/apellido</label>
+            <input type="text" wire:model.live.debounce.300ms="buscarSocio" placeholder="Escribe un nombre o apellido..."
+                   class="w-full rounded bg-slate-700 border-slate-600 text-sm" autocomplete="off">
+            @if ($resultadosSocios->isNotEmpty())
+                <div class="absolute z-10 w-full bg-slate-700 rounded mt-1 divide-y divide-slate-600 shadow-lg">
+                    @foreach ($resultadosSocios as $socioSugerido)
+                        <button type="button" wire:click="elegirSocio('{{ $socioSugerido->cc_persona }}')"
+                                class="w-full text-left px-3 py-2 text-sm hover:bg-slate-600">
+                            {{ $socioSugerido->ct_nombres }} — {{ $socioSugerido->ct_nro_doc }}
+                        </button>
+                    @endforeach
+                </div>
+            @endif
         </div>
         <div class="md:col-span-4">
             <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-4 py-2 rounded">Buscar</button>
@@ -37,7 +53,7 @@
                     <p class="font-medium">{{ $socio['ct_nombres'] }}</p>
                 </div>
                 <div class="text-right">
-                    <p class="text-sm text-slate-400 mb-1">Año {{ $anho }}</p>
+                    <p class="text-sm text-slate-400 mb-1">{{ $anho !== '' ? 'Año '.$anho : 'Todos los años' }}</p>
                     <a href="{{ url('/estado-cuenta/pdf').'?'.http_build_query(['anho' => $anho, 'ct_nro_doc' => $ct_nro_doc, 'cc_concepto' => $cc_concepto]) }}"
                        target="_blank" class="text-indigo-400 hover:text-indigo-300 text-xs">
                         Descargar PDF

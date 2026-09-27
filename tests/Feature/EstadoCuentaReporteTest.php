@@ -25,6 +25,37 @@ it('calcula el saldo final del reporte igual que el sistema legacy', function ()
     expect((float) $componente->get('saldoAnterior'))->toBe(510.0);
 });
 
+/**
+ * Oráculo real: mismo socio (cc_persona=2), pero "todos los años" (anho=''):
+ * SUM(ct_monto) vigente sobre TODOS los años = 3320.00 (26 movimientos).
+ * Sin filtro de año no aplica "saldo anterior" (ya está todo incluido en el detalle).
+ */
+it('permite buscar sin filtrar por año (todos los años)', function () {
+    $this->actingAs((new SegUsuario())->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
+
+    $componente = Livewire::test(EstadoCuentaIndex::class)
+        ->set('anho', '')
+        ->set('ct_nro_doc', '41362897')
+        ->call('buscar')
+        ->assertHasNoErrors();
+
+    expect($componente->get('movimientos'))->toHaveCount(26);
+    expect((float) $componente->get('totalDebito') + (float) $componente->get('totalCredito'))->toBe(3320.0);
+    expect((float) $componente->get('saldoAnterior'))->toBe(0.0);
+    expect((float) $componente->get('saldoFinal'))->toBe(3320.0);
+});
+
+it('sugiere socios por nombre mientras se escribe y permite elegir uno', function () {
+    $this->actingAs((new SegUsuario())->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
+
+    Livewire::test(EstadoCuentaIndex::class)
+        ->set('buscarSocio', 'ACERO MIGUEL')
+        ->assertSet('ct_nro_doc', '')
+        ->call('elegirSocio', '000002')
+        ->assertSet('ct_nro_doc', '41362897')
+        ->assertSet('buscarSocio', '');
+});
+
 it('muestra un mensaje cuando el documento no existe', function () {
     $this->actingAs((new SegUsuario())->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
 

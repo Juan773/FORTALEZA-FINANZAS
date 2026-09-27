@@ -19,6 +19,7 @@ class Index extends Component
     public string $anho;
     public string $ct_nro_doc = '';
     public string $cc_concepto = '';
+    public string $buscarSocio = '';
 
     public ?array $socio = null;
     public array $movimientos = [];
@@ -31,6 +32,25 @@ class Index extends Component
     public function mount(): void
     {
         $this->anho = (string) now()->year;
+    }
+
+    public function resultadosBusquedaSocios()
+    {
+        if (strlen($this->buscarSocio) < 2) {
+            return collect();
+        }
+
+        return GenPersona::where('ct_nombres', 'like', '%'.$this->buscarSocio.'%')
+            ->orderBy('ct_nombres')
+            ->limit(8)->get();
+    }
+
+    public function elegirSocio(string $ccPersona): void
+    {
+        $persona = GenPersona::findOrFail($ccPersona);
+
+        $this->ct_nro_doc = $persona->ct_nro_doc;
+        $this->buscarSocio = '';
     }
 
     public function buscar(EstadoCuentaService $estadoCuenta): void
@@ -48,12 +68,14 @@ class Index extends Component
 
         $this->socio = ['cc_persona' => $persona->cc_persona, 'ct_nombres' => $persona->ct_nombres, 'ct_nro_doc' => $persona->ct_nro_doc];
 
-        $this->movimientos = $estadoCuenta->movimientos($persona->cc_persona, $this->anho, $this->cc_concepto ?: null)->all();
+        $this->movimientos = $estadoCuenta->movimientos($persona->cc_persona, $this->anho ?: null, $this->cc_concepto ?: null)->all();
 
         $this->totalDebito = (string) collect($this->movimientos)->sum('ingreso');
         $this->totalCredito = (string) collect($this->movimientos)->sum('egreso');
 
-        $this->saldoAnterior = $estadoCuenta->saldoAcumuladoHasta($persona->cc_persona, (string) ((int) $this->anho - 1));
+        $this->saldoAnterior = $this->anho !== ''
+            ? $estadoCuenta->saldoAcumuladoHasta($persona->cc_persona, (string) ((int) $this->anho - 1))
+            : '0';
         $this->saldoFinal = (string) ((float) $this->totalDebito + (float) $this->totalCredito + (float) $this->saldoAnterior);
     }
 
@@ -70,6 +92,7 @@ class Index extends Component
         return view('livewire.estado-cuenta.index', [
             'anhos' => range((int) now()->year, (int) now()->year - 9),
             'conceptos' => FinConcepto::where('ct_tipo', 'I')->where('ct_vigencia', '1')->orderBy('ct_nombre')->get(),
+            'resultadosSocios' => $this->resultadosBusquedaSocios(),
         ]);
     }
 }

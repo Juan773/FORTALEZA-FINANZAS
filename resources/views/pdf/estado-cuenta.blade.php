@@ -14,7 +14,7 @@
     <h2>ESTADO DE CUENTA</h2>
     <table>
         <tr>
-            <td>Año: {{ $anho }}</td>
+            <td>{{ $anho !== '' ? 'Año: '.$anho : 'Todos los años' }}</td>
             <td class="right">{{ now()->format('d/m/Y H:i') }}</td>
         </tr>
         <tr>

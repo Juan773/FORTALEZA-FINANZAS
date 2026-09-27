@@ -24,10 +24,12 @@ class EstadoCuentaPdfController extends Controller
 
         $persona = GenPersona::where('ct_nro_doc', $ctNroDoc)->firstOrFail();
 
-        $movimientos = $estadoCuenta->movimientos($persona->cc_persona, $anho, $ccConcepto)->all();
+        $movimientos = $estadoCuenta->movimientos($persona->cc_persona, $anho ?: null, $ccConcepto)->all();
         $totalDebito = (string) collect($movimientos)->sum('ingreso');
         $totalCredito = (string) collect($movimientos)->sum('egreso');
-        $saldoAnterior = $estadoCuenta->saldoAcumuladoHasta($persona->cc_persona, (string) ((int) $anho - 1));
+        $saldoAnterior = $anho !== ''
+            ? $estadoCuenta->saldoAcumuladoHasta($persona->cc_persona, (string) ((int) $anho - 1))
+            : '0';
         $saldoFinal = (string) ((float) $totalDebito + (float) $totalCredito + (float) $saldoAnterior);
 
         return Pdf::loadView('pdf.estado-cuenta', [
@@ -38,6 +40,6 @@ class EstadoCuentaPdfController extends Controller
             'totalCredito' => $totalCredito,
             'saldoAnterior' => $saldoAnterior,
             'saldoFinal' => $saldoFinal,
-        ])->stream("estado-cuenta-{$persona->ct_nro_doc}-{$anho}.pdf");
+        ])->stream("estado-cuenta-{$persona->ct_nro_doc}-".($anho ?: 'todos').".pdf");
     }
 }
