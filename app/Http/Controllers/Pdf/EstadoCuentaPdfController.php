@@ -18,7 +18,12 @@ class EstadoCuentaPdfController extends Controller
 {
     public function __invoke(Request $request, EstadoCuentaService $estadoCuenta): Response
     {
-        $anho = $request->query('anho', (string) now()->year);
+        // No usar el default de query() aquí: el middleware ConvertEmptyStringsToNull
+        // convierte anho='' en null mientras conserva la clave, así que query() con
+        // default solo aplicaría si la clave faltara del todo (nunca es el caso desde
+        // el enlace "Descargar PDF"). Coercionar explícito evita que "todos los años"
+        // (anho='') termine cayendo silenciosamente en el año actual.
+        $anho = (string) ($request->query('anho') ?? '');
         $ctNroDoc = $request->query('ct_nro_doc');
         $ccConcepto = $request->query('cc_concepto') ?: null;
 

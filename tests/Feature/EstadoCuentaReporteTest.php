@@ -56,6 +56,27 @@ it('sugiere socios por nombre mientras se escribe y permite elegir uno', functio
         ->assertSet('buscarSocio', '');
 });
 
+/**
+ * Regresión real detectada en producción: el middleware ConvertEmptyStringsToNull
+ * convierte anho='' en null (conservando la clave), así que $request->query('anho',
+ * $default) NO debía usarse — devolvía el default (año actual) en vez de reconocer
+ * "todos los años", y el PDF terminaba filtrando por el año actual sin que se notara
+ * en la pantalla (ahí Livewire sí lo manejaba bien). El nombre del archivo delata cuál
+ * lógica se ejecutó: "-todos.pdf" si reconoce el filtro vacío, "-2026.pdf" si no.
+ */
+it('el PDF de estado de cuenta respeta "todos los años" cuando anho llega vacío', function () {
+    $this->actingAs((new SegUsuario())->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
+
+    $response = $this->get('/estado-cuenta/pdf?'.http_build_query([
+        'anho' => '',
+        'ct_nro_doc' => '41362897',
+        'cc_concepto' => '',
+    ]));
+
+    $response->assertOk();
+    expect($response->headers->get('Content-Disposition'))->toContain('estado-cuenta-41362897-todos.pdf');
+});
+
 it('muestra un mensaje cuando el documento no existe', function () {
     $this->actingAs((new SegUsuario())->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
 
