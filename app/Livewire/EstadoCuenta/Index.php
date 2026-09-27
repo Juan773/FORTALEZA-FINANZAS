@@ -34,15 +34,31 @@ class Index extends Component
         $this->anho = (string) now()->year;
     }
 
+    /**
+     * Busca también por ct_conyugue: es común que la esposa/esposo del socio no
+     * tenga registro propio (ver caso real Felicita Hilasaca Portillo, cónyuge del
+     * socio Moisés Minaya Pampa) — así igual aparece el socio cuya cuenta es la que
+     * existe de verdad, aclarando en la vista que el nombre coincide por cónyuge.
+     */
     public function resultadosBusquedaSocios()
     {
         if (strlen($this->buscarSocio) < 2) {
             return collect();
         }
 
-        return GenPersona::where('ct_nombres', 'like', '%'.$this->buscarSocio.'%')
+        return GenPersona::where(fn ($q) => $q
+                ->where('ct_nombres', 'like', '%'.$this->buscarSocio.'%')
+                ->orWhere('ct_conyugue', 'like', '%'.$this->buscarSocio.'%')
+            )
             ->orderBy('ct_nombres')
             ->limit(8)->get();
+    }
+
+    public function coincidePorConyugue(GenPersona $persona): bool
+    {
+        return $this->buscarSocio !== ''
+            && ! str_contains(mb_strtoupper($persona->ct_nombres ?? ''), mb_strtoupper($this->buscarSocio))
+            && str_contains(mb_strtoupper($persona->ct_conyugue ?? ''), mb_strtoupper($this->buscarSocio));
     }
 
     public function elegirSocio(string $ccPersona): void

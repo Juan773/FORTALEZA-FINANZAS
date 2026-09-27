@@ -35,6 +35,9 @@
                         <button type="button" wire:click="elegirSocio('{{ $socioSugerido->cc_persona }}')"
                                 class="w-full text-left px-3 py-2 text-sm hover:bg-slate-600">
                             {{ $socioSugerido->ct_nombres }} — {{ $socioSugerido->ct_nro_doc }}
+                            @if ($this->coincidePorConyugue($socioSugerido))
+                                <span class="block text-xs text-slate-400">Cónyuge: {{ $socioSugerido->ct_conyugue }}</span>
+                            @endif
                         </button>
                     @endforeach
                 </div>

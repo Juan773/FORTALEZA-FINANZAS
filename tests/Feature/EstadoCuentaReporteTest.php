@@ -77,6 +77,25 @@ it('el PDF de estado de cuenta respeta "todos los años" cuando anho llega vací
     expect($response->headers->get('Content-Disposition'))->toContain('estado-cuenta-41362897-todos.pdf');
 });
 
+/**
+ * Caso real: Felicita Hilasaca Portillo no tiene registro propio, está solo
+ * como cónyuge del socio Moisés Minaya Pampa (cc_persona=000093, DNI 07282576).
+ * Buscarla por su apellido debe encontrar la cuenta del socio, marcada como
+ * coincidencia por cónyuge.
+ */
+it('encuentra al socio cuando se busca por el nombre de su cónyuge', function () {
+    $this->actingAs((new SegUsuario())->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
+
+    $componente = Livewire::test(EstadoCuentaIndex::class)
+        ->set('buscarSocio', 'HILASACA');
+
+    $resultados = $componente->instance()->resultadosBusquedaSocios();
+
+    expect($resultados)->toHaveCount(1);
+    expect($resultados->first()->ct_nro_doc)->toBe('07282576');
+    expect($componente->instance()->coincidePorConyugue($resultados->first()))->toBeTrue();
+});
+
 it('muestra un mensaje cuando el documento no existe', function () {
     $this->actingAs((new SegUsuario())->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
 

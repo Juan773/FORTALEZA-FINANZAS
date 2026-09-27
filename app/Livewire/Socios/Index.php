@@ -182,11 +182,18 @@ class Index extends Component
         $this->mostrandoFormulario = false;
     }
 
-    /** Reemplaza bo_gen_personas::listarSocioReporte(): mismos tres filtros de reporte. */
+    /**
+     * Reemplaza bo_gen_personas::listarSocioReporte(): mismos tres filtros de reporte,
+     * más la búsqueda por ct_conyugue (mejora nueva: hay socios cuyo cónyuge no tiene
+     * registro propio, y buscarlo por su nombre debe encontrar al socio igual).
+     */
     protected function consultaFiltrada()
     {
         return GenPersona::query()
-            ->when($this->buscar, fn ($q) => $q->where('ct_nombres', 'like', '%'.$this->buscar.'%'))
+            ->when($this->buscar, fn ($q) => $q->where(fn ($sub) => $sub
+                ->where('ct_nombres', 'like', '%'.$this->buscar.'%')
+                ->orWhere('ct_conyugue', 'like', '%'.$this->buscar.'%')
+            ))
             ->when($this->filtroTipoUsuario, fn ($q) => $q->where('ct_tp_user', $this->filtroTipoUsuario))
             ->when($this->filtroZona, fn ($q) => $q->where('ct_zona', $this->filtroZona))
             ->when($this->filtroVigencia !== '', fn ($q) => $q->where('cfl_vigencia', $this->filtroVigencia))
