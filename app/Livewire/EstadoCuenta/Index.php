@@ -17,16 +17,30 @@ use Livewire\Component;
 class Index extends Component
 {
     public string $anho;
+
     public string $ct_nro_doc = '';
+
     public string $cc_concepto = '';
+
     public string $buscarSocio = '';
 
+    public bool $todosLosSocios = false;
+
+    /** @var array<int, array{cc_persona: int, ct_nro_doc: string, ct_nombres: string, debito: float, credito: float, saldo_anterior: float, saldo_final: float}> */
+    public array $resumenSocios = [];
+
     public ?array $socio = null;
+
     public array $movimientos = [];
+
     public string $saldoAnterior = '0';
+
     public string $saldoFinal = '0';
+
     public string $totalDebito = '0';
+
     public string $totalCredito = '0';
+
     public bool $buscado = false;
 
     public function mount(): void
@@ -50,9 +64,9 @@ class Index extends Component
         }
 
         return GenPersona::where(fn ($q) => $q
-                ->whereRaw('UPPER(ct_nombres) LIKE UPPER(?)', ['%'.$this->buscarSocio.'%'])
-                ->orWhereRaw('UPPER(ct_conyugue) LIKE UPPER(?)', ['%'.$this->buscarSocio.'%'])
-            )
+            ->whereRaw('UPPER(ct_nombres) LIKE UPPER(?)', ['%'.$this->buscarSocio.'%'])
+            ->orWhereRaw('UPPER(ct_conyugue) LIKE UPPER(?)', ['%'.$this->buscarSocio.'%'])
+        )
             ->orderBy('ct_nombres')
             ->limit(8)->get();
     }
@@ -76,6 +90,13 @@ class Index extends Component
     {
         $this->buscado = true;
         $this->socio = null;
+        $this->resumenSocios = [];
+
+        if ($this->todosLosSocios) {
+            $this->resumenSocios = $estadoCuenta->resumenTodosLosSocios($this->anho ?: null, $this->cc_concepto ?: null)->all();
+
+            return;
+        }
 
         $persona = GenPersona::where('ct_nro_doc', $this->ct_nro_doc)->first();
 
@@ -96,6 +117,17 @@ class Index extends Component
             ? $estadoCuenta->saldoAcumuladoHasta($persona->cc_persona, (string) ((int) $this->anho - 1))
             : '0';
         $this->saldoFinal = (string) ((float) $this->totalDebito + (float) $this->totalCredito + (float) $this->saldoAnterior);
+    }
+
+    /**
+     * Desde el resumen de todos los socios, abre el detalle de uno con los mismos filtros.
+     */
+    public function verDetalleSocio(string $ctNroDoc, EstadoCuentaService $estadoCuenta): void
+    {
+        $this->todosLosSocios = false;
+        $this->ct_nro_doc = $ctNroDoc;
+
+        $this->buscar($estadoCuenta);
     }
 
     public function deudaEnLetras(): string

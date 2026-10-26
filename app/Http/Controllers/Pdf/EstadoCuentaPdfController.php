@@ -27,6 +27,13 @@ class EstadoCuentaPdfController extends Controller
         $ctNroDoc = $request->query('ct_nro_doc');
         $ccConcepto = $request->query('cc_concepto') ?: null;
 
+        if ($request->boolean('todos')) {
+            return Pdf::loadView('pdf.estado-cuenta-todos', [
+                'anho' => $anho,
+                'resumenSocios' => $estadoCuenta->resumenTodosLosSocios($anho ?: null, $ccConcepto)->all(),
+            ])->stream('estado-cuenta-todos-los-socios-'.($anho ?: 'todos').'.pdf');
+        }
+
         $persona = GenPersona::where('ct_nro_doc', $ctNroDoc)->firstOrFail();
 
         $movimientos = $estadoCuenta->movimientos($persona->cc_persona, $anho ?: null, $ccConcepto)->all();
@@ -45,6 +52,6 @@ class EstadoCuentaPdfController extends Controller
             'totalCredito' => $totalCredito,
             'saldoAnterior' => $saldoAnterior,
             'saldoFinal' => $saldoFinal,
-        ])->stream("estado-cuenta-{$persona->ct_nro_doc}-".($anho ?: 'todos').".pdf");
+        ])->stream("estado-cuenta-{$persona->ct_nro_doc}-".($anho ?: 'todos').'.pdf');
     }
 }

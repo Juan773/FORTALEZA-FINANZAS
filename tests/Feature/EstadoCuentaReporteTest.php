@@ -12,7 +12,7 @@ use Livewire\Livewire;
  *   - saldo final esperado = 240 + 510 = 750.00
  */
 it('calcula el saldo final del reporte igual que el sistema legacy', function () {
-    $this->actingAs((new SegUsuario())->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
+    $this->actingAs((new SegUsuario)->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
 
     $componente = Livewire::test(EstadoCuentaIndex::class)
         ->set('anho', '2018')
@@ -31,7 +31,7 @@ it('calcula el saldo final del reporte igual que el sistema legacy', function ()
  * Sin filtro de año no aplica "saldo anterior" (ya está todo incluido en el detalle).
  */
 it('permite buscar sin filtrar por año (todos los años)', function () {
-    $this->actingAs((new SegUsuario())->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
+    $this->actingAs((new SegUsuario)->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
 
     $componente = Livewire::test(EstadoCuentaIndex::class)
         ->set('anho', '')
@@ -46,7 +46,7 @@ it('permite buscar sin filtrar por año (todos los años)', function () {
 });
 
 it('sugiere socios por nombre mientras se escribe y permite elegir uno', function () {
-    $this->actingAs((new SegUsuario())->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
+    $this->actingAs((new SegUsuario)->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
 
     Livewire::test(EstadoCuentaIndex::class)
         ->set('buscarSocio', 'ACERO MIGUEL')
@@ -65,7 +65,7 @@ it('sugiere socios por nombre mientras se escribe y permite elegir uno', functio
  * lógica se ejecutó: "-todos.pdf" si reconoce el filtro vacío, "-2026.pdf" si no.
  */
 it('el PDF de estado de cuenta respeta "todos los años" cuando anho llega vacío', function () {
-    $this->actingAs((new SegUsuario())->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
+    $this->actingAs((new SegUsuario)->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
 
     $response = $this->get('/estado-cuenta/pdf?'.http_build_query([
         'anho' => '',
@@ -84,7 +84,7 @@ it('el PDF de estado de cuenta respeta "todos los años" cuando anho llega vací
  * coincidencia por cónyuge.
  */
 it('encuentra al socio cuando se busca por el nombre de su cónyuge', function () {
-    $this->actingAs((new SegUsuario())->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
+    $this->actingAs((new SegUsuario)->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
 
     // Minúsculas/mayúsculas mixtas a propósito (así lo escribió el usuario real):
     // el dato está guardado en mayúsculas, la búsqueda debe ser insensible a esto
@@ -101,8 +101,66 @@ it('encuentra al socio cuando se busca por el nombre de su cónyuge', function (
     expect($componente->instance()->coincidePorConyugue($resultados->first()))->toBeTrue();
 });
 
+/**
+ * El resumen de todos los socios debe dar, para cada socio, exactamente lo mismo
+ * que su reporte individual. Oráculo: el mismo socio DNI 41362897 de arriba
+ * (2018: saldo anterior 510.00 + movimientos 240.00 = 750.00; todos los años: 3320.00).
+ */
+it('consulta todos los socios con los mismos saldos que el reporte individual', function () {
+    $this->actingAs((new SegUsuario)->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
+
+    $componente = Livewire::test(EstadoCuentaIndex::class)
+        ->set('anho', '2018')
+        ->set('todosLosSocios', true)
+        ->call('buscar')
+        ->assertHasNoErrors();
+
+    $resumen = collect($componente->get('resumenSocios'));
+    $fila = $resumen->firstWhere('ct_nro_doc', '41362897');
+
+    expect($resumen->count())->toBeGreaterThan(1);
+    expect($componente->get('socio'))->toBeNull();
+    expect($fila['saldo_anterior'])->toBe(510.0);
+    expect($fila['debito'] + $fila['credito'])->toBe(240.0);
+    expect($fila['saldo_final'])->toBe(750.0);
+
+    $componente->set('anho', '')->call('buscar');
+    $filaTodosLosAnhos = collect($componente->get('resumenSocios'))->firstWhere('ct_nro_doc', '41362897');
+
+    expect($filaTodosLosAnhos['saldo_anterior'])->toBe(0.0);
+    expect($filaTodosLosAnhos['saldo_final'])->toBe(3320.0);
+});
+
+it('abre el detalle de un socio desde el resumen de todos los socios', function () {
+    $this->actingAs((new SegUsuario)->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
+
+    $componente = Livewire::test(EstadoCuentaIndex::class)
+        ->set('anho', '2018')
+        ->set('todosLosSocios', true)
+        ->call('buscar')
+        ->call('verDetalleSocio', '41362897')
+        ->assertSet('todosLosSocios', false)
+        ->assertSet('ct_nro_doc', '41362897');
+
+    expect($componente->get('socio')['ct_nro_doc'])->toBe('41362897');
+    expect((float) $componente->get('saldoFinal'))->toBe(750.0);
+});
+
+it('genera el PDF de todos los socios', function () {
+    $this->actingAs((new SegUsuario)->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
+
+    $response = $this->get('/estado-cuenta/pdf?'.http_build_query([
+        'anho' => '2018',
+        'todos' => 1,
+        'cc_concepto' => '',
+    ]));
+
+    $response->assertOk();
+    expect($response->headers->get('Content-Disposition'))->toContain('estado-cuenta-todos-los-socios-2018.pdf');
+});
+
 it('muestra un mensaje cuando el documento no existe', function () {
-    $this->actingAs((new SegUsuario())->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
+    $this->actingAs((new SegUsuario)->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']));
 
     Livewire::test(EstadoCuentaIndex::class)
         ->set('ct_nro_doc', '99999999')

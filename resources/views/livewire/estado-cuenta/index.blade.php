@@ -13,7 +13,8 @@
         </div>
         <div>
             <label class="block text-xs text-slate-400 mb-1">DNI del socio</label>
-            <input type="text" wire:model="ct_nro_doc" class="w-full rounded bg-slate-700 border-slate-600 text-sm">
+            <input type="text" wire:model="ct_nro_doc" @disabled($todosLosSocios)
+                   class="w-full rounded bg-slate-700 border-slate-600 text-sm disabled:opacity-50">
             @error('ct_nro_doc') <p class="text-red-400 text-xs mt-1">{{ $message }}</p> @enderror
         </div>
         <div class="md:col-span-2">
@@ -25,10 +26,17 @@
                 @endforeach
             </select>
         </div>
+        <div class="md:col-span-4">
+            <label class="inline-flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                <input type="checkbox" wire:model.live="todosLosSocios" class="rounded bg-slate-700 border-slate-600">
+                Consultar todos los socios
+            </label>
+        </div>
         <div class="md:col-span-4 relative">
             <label class="block text-xs text-slate-400 mb-1">O busca al socio por nombre/apellido</label>
             <input type="text" wire:model.live.debounce.300ms="buscarSocio" placeholder="Escribe un nombre o apellido..."
-                   class="w-full rounded bg-slate-700 border-slate-600 text-sm" autocomplete="off">
+                   @disabled($todosLosSocios)
+                   class="w-full rounded bg-slate-700 border-slate-600 text-sm disabled:opacity-50" autocomplete="off">
             @if ($resultadosSocios->isNotEmpty())
                 <div class="absolute z-10 w-full bg-slate-700 rounded mt-1 divide-y divide-slate-600 shadow-lg">
                     @foreach ($resultadosSocios as $socioSugerido)
@@ -48,7 +56,71 @@
         </div>
     </form>
 
-    @if ($buscado && $socio)
+    @if ($buscado && $todosLosSocios)
+        <div class="bg-slate-800 rounded-lg p-6">
+            <div class="flex justify-between mb-4">
+                <div>
+                    <p class="text-sm text-slate-400">Todos los socios</p>
+                    <p class="font-medium">{{ count($resumenSocios) }} socios con movimientos o saldo</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-slate-400 mb-1">{{ $anho !== '' ? 'Año '.$anho : 'Todos los años' }}</p>
+                    <a href="{{ url('/estado-cuenta/pdf').'?'.http_build_query(['anho' => $anho, 'todos' => 1, 'cc_concepto' => $cc_concepto]) }}"
+                       target="_blank" class="text-indigo-400 hover:text-indigo-300 text-xs">
+                        Descargar PDF
+                    </a>
+                </div>
+            </div>
+
+            @if (count($resumenSocios) === 0)
+                <p class="text-slate-400 text-sm">No hay movimientos para los filtros elegidos.</p>
+            @else
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-slate-400 border-b border-slate-700">
+                                <th class="py-2">#</th>
+                                <th>DNI</th>
+                                <th>Socio</th>
+                                <th class="text-right">Saldo anterior</th>
+                                <th class="text-right">Débito</th>
+                                <th class="text-right">Crédito</th>
+                                <th class="text-right">Saldo final</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($resumenSocios as $i => $fila)
+                                <tr class="border-b border-slate-800" wire:key="resumen-{{ $fila['cc_persona'] }}">
+                                    <td class="py-2">{{ $i + 1 }}</td>
+                                    <td>{{ $fila['ct_nro_doc'] }}</td>
+                                    <td>{{ $fila['ct_nombres'] }}</td>
+                                    <td class="text-right">{{ number_format($fila['saldo_anterior'], 2) }}</td>
+                                    <td class="text-right">{{ number_format(abs($fila['debito']), 2) }}</td>
+                                    <td class="text-right">{{ number_format($fila['credito'], 2) }}</td>
+                                    <td class="text-right font-medium">{{ number_format($fila['saldo_final'], 2) }}</td>
+                                    <td class="text-right">
+                                        <button type="button" wire:click="verDetalleSocio('{{ $fila['ct_nro_doc'] }}')"
+                                                class="text-indigo-400 hover:text-indigo-300 text-xs">
+                                            Ver detalle
+                                        </button>
+                                    </td>
+                                </tr>
+                            @endforeach
+                            <tr class="border-t border-slate-700 font-semibold">
+                                <td colspan="3" class="text-right py-2">Totales:</td>
+                                <td class="text-right">{{ number_format(collect($resumenSocios)->sum('saldo_anterior'), 2) }}</td>
+                                <td class="text-right">{{ number_format(abs(collect($resumenSocios)->sum('debito')), 2) }}</td>
+                                <td class="text-right">{{ number_format(collect($resumenSocios)->sum('credito'), 2) }}</td>
+                                <td class="text-right">{{ number_format(collect($resumenSocios)->sum('saldo_final'), 2) }}</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
+    @elseif ($buscado && $socio)
         <div class="bg-slate-800 rounded-lg p-6">
             <div class="flex justify-between mb-4">
                 <div>
