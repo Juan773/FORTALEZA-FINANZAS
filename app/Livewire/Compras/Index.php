@@ -27,24 +27,38 @@ class Index extends Component
     use WithPagination;
 
     public bool $mostrandoFormulario = false;
+
     public ?int $cc_compras = null;
 
     public string $emp_ruc = '';
+
     public string $emp_razon_social = '';
+
     public string $ct_comprobante = '';
+
     public string $ct_serie = '';
+
     public string $ct_numero = '';
+
     public string $cc_concepto = '';
+
     public string $cc_subconcepto = '';
+
     public string $ct_glosa = '';
+
     public string $ct_monto = '';
+
     public string $ct_fecha_doc = '';
+
     public string $ct_observacion = '';
 
     // Resumen por concepto (reemplaza reportes/egr_index.php + egr_listar.php, sin detalle)
     public bool $mostrandoResumen = false;
+
     public string $resumenAnho = '';
+
     public string $resumenPeriodo = '';
+
     public array $resumenFilas = [];
 
     protected array $reglas = [
@@ -59,6 +73,8 @@ class Index extends Component
 
     public function nuevo(): void
     {
+        $this->authorize('escribir');
+
         $this->reset([
             'cc_compras', 'emp_ruc', 'emp_razon_social', 'ct_comprobante', 'ct_serie', 'ct_numero',
             'cc_concepto', 'cc_subconcepto', 'ct_glosa', 'ct_monto', 'ct_fecha_doc', 'ct_observacion',
@@ -68,6 +84,8 @@ class Index extends Component
 
     public function editar(int $ccCompras): void
     {
+        $this->authorize('escribir');
+
         $compra = FinCompras::findOrFail($ccCompras);
 
         $this->cc_compras = $compra->cc_compras;
@@ -88,6 +106,8 @@ class Index extends Component
 
     public function guardar(): void
     {
+        $this->authorize('escribir');
+
         $this->validate($this->reglas);
 
         $datos = [

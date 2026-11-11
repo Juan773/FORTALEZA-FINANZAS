@@ -1,9 +1,11 @@
 <div class="max-w-5xl">
     <div class="flex items-center justify-between mb-4">
         <h1 class="text-lg font-semibold">Recibos emitidos</h1>
+        @can('escribir')
         <a href="{{ url('/caja/nuevo') }}" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-4 py-2 rounded">
             + Nuevo recibo
         </a>
+        @endcan
     </div>
 
     <div class="mb-4">
@@ -48,7 +50,7 @@
                         <a href="{{ url('/caja/'.$recibo->cc_caja.'/pdf') }}" target="_blank" class="text-indigo-400 hover:text-indigo-300 text-xs">
                             PDF
                         </a>
-                        @if ($recibo->ct_vigencia == '1')
+                        @if ($recibo->ct_vigencia == '1' && auth()->user()?->can('escribir'))
                             <button wire:click="anular({{ $recibo->cc_caja }})"
                                     wire:confirm="¿Anular este recibo? Esta acción no se puede deshacer."
                                     class="text-red-400 hover:text-red-300 text-xs">

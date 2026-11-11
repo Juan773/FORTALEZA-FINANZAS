@@ -22,13 +22,19 @@ class SegUsuario extends Model implements Authenticatable
     use Authorizable;
 
     protected $connection = 'legacy';
+
     protected $table = 'vt_empleado_usuario';
+
     protected $primaryKey = 'cc_usuario';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
+
     public $timestamps = false;
 
     protected $guarded = [];
+
     protected $hidden = ['ct_clave'];
 
     public function persona(): BelongsTo
@@ -46,6 +52,18 @@ class SegUsuario extends Model implements Authenticatable
      * cfl_acceso/cfl_vigencia son `int unsigned` (no texto): comparar con '1' estricto
      * siempre da false. Se usa == (no ===) a propósito para tolerar int o string.
      */
+    /**
+     * Perfil "Solo lectura": puede consultar todo (listados, estado de cuenta,
+     * balances, PDF y Excel) pero no crear, editar ni anular nada.
+     * Comparación tolerante a mayúsculas y espacios porque el perfil se crea a mano
+     * desde la pantalla Perfiles; un nombre mal escrito no debe dar permiso de escritura
+     * por accidente sin que se note (ver Gate 'escribir' en AppServiceProvider).
+     */
+    public function esSoloLectura(): bool
+    {
+        return mb_strtolower(trim((string) $this->perfil?->ct_perfil)) === 'solo lectura';
+    }
+
     public function puedeIngresar(): bool
     {
         return $this->cfl_acceso == '1' && $this->cfl_vigencia == '1';

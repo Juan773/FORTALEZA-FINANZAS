@@ -14,12 +14,17 @@ use Livewire\Component;
 class Index extends Component
 {
     public bool $mostrandoFormulario = false;
+
     public ?int $cc_concepto = null;
+
     public string $ct_tipo = 'I';
+
     public string $ct_nombre = '';
+
     public bool $ct_vigencia = true;
 
     public ?int $conceptoExpandido = null;
+
     public string $nuevoSubconceptoNombre = '';
 
     protected array $reglas = [
@@ -29,6 +34,8 @@ class Index extends Component
 
     public function nuevo(): void
     {
+        $this->authorize('escribir');
+
         $this->reset(['cc_concepto', 'ct_nombre']);
         $this->ct_tipo = 'I';
         $this->ct_vigencia = true;
@@ -37,6 +44,8 @@ class Index extends Component
 
     public function editar(int $ccConcepto): void
     {
+        $this->authorize('escribir');
+
         $concepto = FinConcepto::findOrFail($ccConcepto);
 
         $this->cc_concepto = $concepto->cc_concepto;
@@ -48,6 +57,8 @@ class Index extends Component
 
     public function guardar(): void
     {
+        $this->authorize('escribir');
+
         $this->validate($this->reglas);
 
         $datos = [
@@ -80,6 +91,8 @@ class Index extends Component
 
     public function agregarSubconcepto(int $ccConcepto): void
     {
+        $this->authorize('escribir');
+
         $this->validate(['nuevoSubconceptoNombre' => ['required', 'string', 'max:50']]);
 
         FinSubconcepto::create([
@@ -93,6 +106,8 @@ class Index extends Component
 
     public function quitarSubconcepto(int $ccSubconcepto): void
     {
+        $this->authorize('escribir');
+
         FinSubconcepto::where('cc_subconcepto', $ccSubconcepto)->update(['ct_vigencia' => '0']);
     }
 

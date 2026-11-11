@@ -14,16 +14,25 @@ use Livewire\Component;
 class Index extends Component
 {
     public bool $mostrandoFormulario = false;
+
     public ?int $emp_id = null;
 
     public string $emp_razon_social = '';
+
     public string $emp_nom_comercial = '';
+
     public string $emp_ruc = '';
+
     public string $emp_direccion = '';
+
     public string $emp_telefono = '';
+
     public string $emp_celular = '';
+
     public string $emp_email = '';
+
     public string $emp_web = '';
+
     public bool $emp_estado = true;
 
     protected array $reglas = [
@@ -39,6 +48,8 @@ class Index extends Component
 
     public function nuevo(): void
     {
+        $this->authorize('escribir');
+
         $this->reset([
             'emp_id', 'emp_razon_social', 'emp_nom_comercial', 'emp_ruc',
             'emp_direccion', 'emp_telefono', 'emp_celular', 'emp_email', 'emp_web',
@@ -49,6 +60,8 @@ class Index extends Component
 
     public function editar(int $empId): void
     {
+        $this->authorize('escribir');
+
         $proveedor = GenEmpresa::findOrFail($empId);
 
         $this->emp_id = $proveedor->emp_id;
@@ -67,6 +80,8 @@ class Index extends Component
 
     public function guardar(): void
     {
+        $this->authorize('escribir');
+
         $this->validate($this->reglas);
 
         $rucDuplicado = GenEmpresa::query()

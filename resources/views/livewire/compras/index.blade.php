@@ -5,9 +5,11 @@
             <button wire:click="alternarResumen" class="bg-slate-700 hover:bg-slate-600 text-sm px-4 py-2 rounded">
                 {{ $mostrandoResumen ? 'Ver listado' : 'Resumen por concepto' }}
             </button>
+            @can('escribir')
             <button wire:click="nuevo" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-4 py-2 rounded">
                 + Nuevo egreso
             </button>
+            @endcan
         </div>
     </div>
 
@@ -176,7 +178,9 @@
                         <td>{{ $compra->ct_glosa }}</td>
                         <td class="text-right">{{ number_format($compra->ct_monto, 2) }}</td>
                         <td class="text-right">
+                            @can('escribir')
                             <button wire:click="editar({{ $compra->cc_compras }})" class="text-indigo-400 hover:text-indigo-300 text-xs">Editar</button>
+                            @endcan
                         </td>
                     </tr>
                 @endforeach

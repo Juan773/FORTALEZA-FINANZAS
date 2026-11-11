@@ -23,19 +23,29 @@ use Livewire\Component;
 class NuevoRecibo extends Component
 {
     public string $buscarSocio = '';
+
     public ?string $cc_persona = null;
+
     public string $nombreSocio = '';
 
     public string $ct_serie = '';
+
     public string $pag_tipo = '';
+
     public string $pag_fecha = '';
+
     public string $pag_nop = '';
+
     public string $cc_banco = '';
+
     public string $cc_cuenta = '';
+
     public string $caj_obs = '';
 
     public string $nuevoConcepto = '';
+
     public string $nuevaCantidad = '1';
+
     public string $nuevoImporte = '0';
 
     public array $carrito = [];
@@ -93,6 +103,8 @@ class NuevoRecibo extends Component
 
     public function guardar(CajaService $cajaService): void
     {
+        $this->authorize('escribir');
+
         $this->validate([
             'cc_persona' => ['required'],
             'ct_serie' => ['required'],

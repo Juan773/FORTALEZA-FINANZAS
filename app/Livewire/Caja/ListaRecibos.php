@@ -24,6 +24,8 @@ class ListaRecibos extends Component
 
     public function anular(int $ccCaja, CajaService $cajaService): void
     {
+        $this->authorize('escribir');
+
         $cajaService->anularRecibo($ccCaja);
         session()->flash('status', 'Recibo anulado correctamente.');
     }

@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Pdf\EstadoCuentaPdfController;
+use App\Http\Controllers\Pdf\ReciboPdfController;
 use App\Livewire\Auditoria\Index as AuditoriaIndex;
 use App\Livewire\Balances\Index as BalancesIndex;
 use App\Livewire\Caja\ListaRecibos;
@@ -14,8 +16,6 @@ use App\Livewire\Perfiles\Index as PerfilesIndex;
 use App\Livewire\Proveedores\Index as ProveedoresIndex;
 use App\Livewire\Socios\Index as SociosIndex;
 use App\Livewire\Usuarios\Index as UsuariosIndex;
-use App\Http\Controllers\Pdf\EstadoCuentaPdfController;
-use App\Http\Controllers\Pdf\ReciboPdfController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -35,8 +35,8 @@ Route::get('/compras', ComprasIndex::class)->middleware('auth');
 Route::get('/estado-cuenta', EstadoCuentaIndex::class)->middleware('auth');
 Route::get('/balances', BalancesIndex::class)->middleware('auth');
 Route::get('/caja', ListaRecibos::class)->middleware('auth');
-Route::get('/caja/nuevo', NuevoRecibo::class)->middleware('auth');
-Route::get('/cargar-deuda', CargarDeudaIndex::class)->middleware('auth');
+Route::get('/caja/nuevo', NuevoRecibo::class)->middleware(['auth', 'escritura']);
+Route::get('/cargar-deuda', CargarDeudaIndex::class)->middleware(['auth', 'escritura']);
 Route::get('/caja/{ccCaja}/pdf', ReciboPdfController::class)->middleware('auth');
 Route::get('/estado-cuenta/pdf', EstadoCuentaPdfController::class)->middleware('auth');
 Route::get('/usuarios', UsuariosIndex::class)->middleware(['auth', 'administrador']);

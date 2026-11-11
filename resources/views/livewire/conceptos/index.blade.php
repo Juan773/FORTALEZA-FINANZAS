@@ -1,9 +1,11 @@
 <div class="max-w-3xl">
     <div class="flex items-center justify-between mb-4">
         <h1 class="text-lg font-semibold">Conceptos</h1>
+        @can('escribir')
         <button wire:click="nuevo" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-4 py-2 rounded">
             + Nuevo concepto
         </button>
+        @endcan
     </div>
 
     @if (session('status'))
@@ -56,7 +58,9 @@
                         <button wire:click="alternarSubconceptos({{ $concepto->cc_concepto }})" class="text-slate-400 hover:text-white">
                             Subconceptos ({{ $concepto->subconceptos->where('ct_vigencia', '1')->count() }})
                         </button>
+                        @can('escribir')
                         <button wire:click="editar({{ $concepto->cc_concepto }})" class="text-indigo-400 hover:text-indigo-300">Editar</button>
+                        @endcan
                     </div>
                 </div>
 
@@ -65,15 +69,19 @@
                         @foreach ($concepto->subconceptos->where('ct_vigencia', '1') as $sub)
                             <div class="flex items-center justify-between text-sm py-1">
                                 <span>{{ $sub->ct_nombre }}</span>
+                                @can('escribir')
                                 <button wire:click="quitarSubconcepto({{ $sub->cc_subconcepto }})" class="text-red-400 hover:text-red-300 text-xs">Quitar</button>
+                                @endcan
                             </div>
                         @endforeach
+                        @can('escribir')
                         <form wire:submit="agregarSubconcepto({{ $concepto->cc_concepto }})" class="flex gap-2 mt-2">
                             <input type="text" wire:model="nuevoSubconceptoNombre" placeholder="Nuevo subconcepto"
                                    class="flex-1 rounded bg-slate-700 border-slate-600 text-sm">
                             <button type="submit" class="bg-slate-700 hover:bg-slate-600 text-xs px-3 rounded">Agregar</button>
                         </form>
                         @error('nuevoSubconceptoNombre') <p class="text-red-400 text-xs mt-1">{{ $message }}</p> @enderror
+                        @endcan
                     </div>
                 @endif
             </div>

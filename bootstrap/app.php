@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\EnsureLegacySessionNotExpired;
+use App\Http\Middleware\EsAdministrador;
+use App\Http\Middleware\PuedeEscribir;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,8 +20,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // los assets por contenido mixto.
         $middleware->trustProxies(at: '*');
 
-        $middleware->appendToGroup('web', \App\Http\Middleware\EnsureLegacySessionNotExpired::class);
-        $middleware->alias(['administrador' => \App\Http\Middleware\EsAdministrador::class]);
+        $middleware->appendToGroup('web', EnsureLegacySessionNotExpired::class);
+        $middleware->alias([
+            'administrador' => EsAdministrador::class,
+            'escritura' => PuedeEscribir::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

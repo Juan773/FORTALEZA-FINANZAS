@@ -18,10 +18,15 @@ use Livewire\Component;
 class Index extends Component
 {
     public string $ct_fecha;
+
     public string $cc_persona = '';
+
     public bool $todos = false;
+
     public string $cc_concepto = '';
+
     public string $cc_descripcion = '';
+
     public string $ct_monto = '';
 
     public function mount(): void
@@ -31,6 +36,8 @@ class Index extends Component
 
     public function guardar(): void
     {
+        $this->authorize('escribir');
+
         $this->validate([
             'ct_fecha' => ['required', 'date'],
             'cc_persona' => [$this->todos ? 'nullable' : 'required'],

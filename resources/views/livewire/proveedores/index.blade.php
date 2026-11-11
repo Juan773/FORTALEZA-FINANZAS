@@ -1,9 +1,11 @@
 <div class="max-w-4xl">
     <div class="flex items-center justify-between mb-4">
         <h1 class="text-lg font-semibold">Proveedores</h1>
+        @can('escribir')
         <button wire:click="nuevo" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-4 py-2 rounded">
             + Nuevo proveedor
         </button>
+        @endcan
     </div>
 
     @if (session('status'))
@@ -86,7 +88,9 @@
                         </span>
                     </td>
                     <td class="text-right">
+                        @can('escribir')
                         <button wire:click="editar({{ $proveedor->emp_id }})" class="text-indigo-400 hover:text-indigo-300 text-xs">Editar</button>
+                        @endcan
                     </td>
                 </tr>
             @endforeach

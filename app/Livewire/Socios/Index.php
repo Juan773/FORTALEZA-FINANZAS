@@ -22,31 +22,53 @@ class Index extends Component
     use WithPagination;
 
     public string $buscar = '';
+
     public string $filtroTipoUsuario = '';
+
     public string $filtroZona = '';
+
     public string $filtroVigencia = '';
 
     public bool $mostrandoFormulario = false;
+
     public ?string $cc_persona = null;
 
     public string $ct_nombres = '';
+
     public string $cp_tipo_doc = '1';
+
     public string $ct_nro_doc = '';
+
     public string $cp_sexo = 'M';
+
     public string $ct_email = '';
+
     public string $ct_celular = '';
+
     public string $ct_direccion = '';
+
     public string $ct_fech_nac = '';
+
     public string $ct_religion = '';
+
     public string $ct_est_civil = '';
+
     public string $ct_zona = '';
+
     public string $ct_tp_user = '02';
+
     public string $ct_conyugue = '';
+
     public string $ct_hijos = '0';
+
     public string $cc_profesion = '';
+
     public string $ct_manzana = '';
+
     public string $ct_pago = '';
+
     public string $ct_obs = '';
+
     public bool $cfl_vigencia = true;
 
     protected function reglas(): array
@@ -82,6 +104,8 @@ class Index extends Component
 
     public function nuevo(): void
     {
+        $this->authorize('escribir');
+
         $this->reset([
             'cc_persona', 'ct_nombres', 'ct_nro_doc', 'ct_email', 'ct_celular', 'ct_direccion',
             'ct_fech_nac', 'ct_religion', 'ct_est_civil', 'ct_zona', 'ct_conyugue', 'cc_profesion',
@@ -97,6 +121,8 @@ class Index extends Component
 
     public function editar(string $ccPersona): void
     {
+        $this->authorize('escribir');
+
         $socio = GenPersona::findOrFail($ccPersona);
 
         $this->cc_persona = $socio->cc_persona;
@@ -125,6 +151,8 @@ class Index extends Component
 
     public function guardar(): void
     {
+        $this->authorize('escribir');
+
         $this->validate($this->reglas());
 
         $documentoDuplicado = GenPersona::query()

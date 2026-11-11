@@ -5,6 +5,9 @@
         'CONSULTAS' => [['/estado-cuenta', 'Estado de cuenta', '▤'], ['/balances', 'Balances', '◷']],
         'DIRECTORIO' => [['/socios', 'Socios', '♧'], ['/conceptos', 'Conceptos', '▦'], ['/proveedores', 'Proveedores', '◇']],
     ];
+    if (auth()->user()?->cannot('escribir')) {
+        $grupos['MOVIMIENTOS'] = [['/caja', 'Recibos', '↙'], ['/compras', 'Egresos', '↗']];
+    }
     if (auth()->user()?->perfil?->ct_perfil === 'Administrador') {
         $grupos['ADMINISTRACIÓN'] = [['/usuarios', 'Usuarios', '♧'], ['/perfiles', 'Perfiles', '▣'], ['/auditoria', 'Auditoría', '◎']];
     }
