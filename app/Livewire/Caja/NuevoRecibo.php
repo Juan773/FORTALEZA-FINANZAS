@@ -30,6 +30,8 @@ class NuevoRecibo extends Component
 
     public string $ct_serie = '';
 
+    public string $ct_numero = '';
+
     public string $pag_tipo = '';
 
     public string $pag_fecha = '';
@@ -72,6 +74,18 @@ class NuevoRecibo extends Component
         $this->buscarSocio = '';
     }
 
+    /**
+     * Al elegir el comprobante, propone el número siguiente al del último recibo
+     * emitido en esa serie. Es solo una sugerencia: el cajero escribe el número
+     * impreso en el talonario físico.
+     */
+    public function updatedCtSerie(): void
+    {
+        $this->ct_numero = $this->ct_serie
+            ? (string) app(CajaService::class)->numeroSugerido($this->ct_serie)
+            : '';
+    }
+
     public function agregarLinea(): void
     {
         $this->validate([
@@ -108,6 +122,7 @@ class NuevoRecibo extends Component
         $this->validate([
             'cc_persona' => ['required'],
             'ct_serie' => ['required'],
+            'ct_numero' => ['required', 'integer', 'min:1', 'max:99999999'],
             'pag_tipo' => ['required', 'in:E,V'],
             'cc_banco' => [$this->pag_tipo === 'V' ? 'required' : 'nullable'],
             'cc_cuenta' => [$this->pag_tipo === 'V' ? 'required' : 'nullable'],
@@ -119,9 +134,16 @@ class NuevoRecibo extends Component
             return;
         }
 
+        if ($cajaService->numeroOcupado($this->ct_serie, (int) $this->ct_numero)) {
+            $this->addError('ct_numero', 'Ya existe un recibo vigente con ese número en esta serie.');
+
+            return;
+        }
+
         $cajaService->crearRecibo([
             'cc_persona' => $this->cc_persona,
             'ct_serie' => $this->ct_serie,
+            'ct_numero' => (int) $this->ct_numero,
             'caj_fecha' => now(),
             'pag_tipo' => $this->pag_tipo,
             'pag_fecha' => $this->pag_fecha ?: null,
@@ -133,7 +155,9 @@ class NuevoRecibo extends Component
         ], $this->carrito);
 
         session()->flash('status', 'Recibo emitido correctamente.');
-        $this->reset(['cc_persona', 'nombreSocio', 'pag_tipo', 'pag_fecha', 'pag_nop', 'cc_banco', 'cc_cuenta', 'caj_obs', 'carrito']);
+        $siguiente = (int) $this->ct_numero + 1;
+        $this->reset(['cc_persona', 'nombreSocio', 'ct_numero', 'pag_tipo', 'pag_fecha', 'pag_nop', 'cc_banco', 'cc_cuenta', 'caj_obs', 'carrito']);
+        $this->ct_numero = (string) $siguiente;
     }
 
     public function cuentasDelBanco()

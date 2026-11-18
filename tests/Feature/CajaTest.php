@@ -12,7 +12,7 @@ use Livewire\Livewire;
 
 function usuarioAutenticadoCaja(): SegUsuario
 {
-    return (new SegUsuario())->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']);
+    return (new SegUsuario)->forceFill(['cc_usuario' => '1', 'cc_user' => 'test']);
 }
 
 beforeEach(function () {
@@ -27,12 +27,13 @@ afterEach(function () {
     FinComprobante::where('ct_serie', '001')->update(['ct_correlativo' => $this->correlativoOriginal]);
 });
 
-it('emite un recibo nuevo con numeración atómica y crea el movimiento en estado de cuenta', function () {
+it('emite un recibo con el número escrito por el cajero y crea el movimiento en estado de cuenta', function () {
     $this->actingAs(usuarioAutenticadoCaja());
 
     Livewire::test(NuevoRecibo::class)
         ->call('elegirSocio', '2', 'ACERO MIGUEL JORGE JOHN')
         ->set('ct_serie', '001')
+        ->set('ct_numero', '99990001')
         ->set('pag_tipo', 'E')
         ->set('caj_obs', 'TEST recibo de prueba')
         ->set('nuevoConcepto', '1')
@@ -46,7 +47,7 @@ it('emite un recibo nuevo con numeración atómica y crea el movimiento en estad
     $recibo = FinCaja::where('caj_obs', 'TEST recibo de prueba')->first();
 
     expect($recibo)->not->toBeNull();
-    expect((int) $recibo->ct_numero)->toBe($this->correlativoOriginal + 1);
+    expect((int) $recibo->ct_numero)->toBe(99990001);
     expect($recibo->cc_persona)->toBe(2);
     expect((float) $recibo->detalle->first()->ct_total)->toBe(50.0);
 
@@ -54,7 +55,39 @@ it('emite un recibo nuevo con numeración atómica y crea el movimiento en estad
     expect($movimiento->ct_tipo)->toBe('P');
     expect((float) $movimiento->ct_monto)->toBe(-50.0);
 
-    expect((int) FinComprobante::where('ct_serie', '001')->value('ct_correlativo'))->toBe($this->correlativoOriginal + 1);
+    expect((int) FinComprobante::where('ct_serie', '001')->value('ct_correlativo'))->toBe(99990001);
+});
+
+it('sugiere el número siguiente al último recibo de la serie, sin chocar con uno vigente', function () {
+    $this->actingAs(usuarioAutenticadoCaja());
+
+    $sugerido = (int) Livewire::test(NuevoRecibo::class)
+        ->set('ct_serie', '001')
+        ->get('ct_numero');
+
+    expect($sugerido)->toBeGreaterThan(0);
+    expect(FinCaja::where('ct_serie', '001')->where('ct_numero', $sugerido)->where('ct_vigencia', '1')->exists())->toBeFalse();
+});
+
+it('rechaza un número que ya tiene un recibo vigente en la serie', function () {
+    $this->actingAs(usuarioAutenticadoCaja());
+
+    $ocupado = (int) FinCaja::where('ct_serie', '001')->where('ct_vigencia', '1')->value('ct_numero');
+    $recibosAntes = FinCaja::count();
+
+    Livewire::test(NuevoRecibo::class)
+        ->call('elegirSocio', '2', 'ACERO MIGUEL JORGE JOHN')
+        ->set('ct_serie', '001')
+        ->set('ct_numero', (string) $ocupado)
+        ->set('pag_tipo', 'E')
+        ->set('caj_obs', 'TEST número repetido')
+        ->set('nuevoConcepto', '1')
+        ->set('nuevoImporte', '10')
+        ->call('agregarLinea')
+        ->call('guardar')
+        ->assertHasErrors(['ct_numero']);
+
+    expect(FinCaja::count())->toBe($recibosAntes);
 });
 
 it('anula un recibo replicando el criterio legacy: vigencia 0 y montos en cero', function () {

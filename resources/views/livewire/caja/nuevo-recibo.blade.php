@@ -35,13 +35,19 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
                 <label class="block text-xs text-slate-400 mb-1">Comprobante</label>
-                <select wire:model="ct_serie" class="w-full rounded bg-slate-700 border-slate-600 text-sm">
+                <select wire:model.live="ct_serie" class="w-full rounded bg-slate-700 border-slate-600 text-sm">
                     <option value="">—</option>
                     @foreach ($comprobantes as $c)
                         <option value="{{ $c->ct_serie }}">{{ $c->ct_documento }} (serie {{ $c->ct_serie }})</option>
                     @endforeach
                 </select>
                 @error('ct_serie') <p class="text-red-400 text-xs mt-1">{{ $message }}</p> @enderror
+            </div>
+            <div>
+                <label class="block text-xs text-slate-400 mb-1">N° de recibo</label>
+                <input type="number" min="1" wire:model="ct_numero" placeholder="Número del talonario"
+                       class="w-full rounded bg-slate-700 border-slate-600 text-sm">
+                @error('ct_numero') <p class="text-red-400 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label class="block text-xs text-slate-400 mb-1">Forma de pago</label>
